@@ -1,0 +1,10 @@
+module,team,keywords
+Authentication,Security,"login, password, authentication, authorization, token, session, signup, logout, password reset"
+Payment,Backend,"payment, checkout, transaction, refund, billing, invoice, card, purchase, payment gateway"
+UI,Frontend,"button, layout, display, screen, CSS, interface, form, visual, typo"
+Database,Database,"database, SQL, query, schema, table, connection, migration, PostgreSQL, MySQL"
+API,Backend,"API, endpoint, HTTP, request, response, REST, JSON, route, status code"
+Notifications,Backend,"notification, email, SMS, alert, push, message, reminder, mail"
+Search,Backend,"search, query, filter, index, results, autocomplete, keyword, lookup"
+Performance,DevOps,"slow, latency, timeout, memory, CPU, load, performance, throughput, bottleneck"
+Infrastructure,DevOps,"server, deployment, Docker, container, network, service, infrastructure, crash, availability"
