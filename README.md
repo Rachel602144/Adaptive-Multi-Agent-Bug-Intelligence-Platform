@@ -2,13 +2,7 @@
 
 Team: Rachel Patni (graph + API + integration), Khushi Yadav (data + ML + DB), Isha S U (frontend).
 
-## Ownership — only edit your own folders
-| Path | Owner |
-|---|---|
-| backend/app/main.py, backend/app/graph/ | Rachel |
-| backend/app/ml/, backend/app/db/ | Khushi |
-| frontend/ | Isha |
-| contracts/ | Shared — announce before changing |
+
 
 ## Rules
 1. `git pull` before you start. Commit + push small and often.
