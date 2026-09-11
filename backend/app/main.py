@@ -10,6 +10,7 @@ from app import config, llm
 from app.db import repository
 from app.db.database import init_db
 from app.graph.graph import run_triage
+from app.graph.serialize import serialize_state
 from app.knowledge import MODULES, TEAMS
 from app.ml import duplicate
 
@@ -50,6 +51,23 @@ def submit_bug(bug: BugIn):
     bug_id = repository.create_bug(bug.model_dump(), mode)
     state = run_triage({**bug.model_dump(), "bug_id": bug_id}, mode=mode)
     return repository.save_result(bug_id, state)
+
+
+@app.post("/api/compare")
+def compare(bug: BugIn):
+    """Research ablation: run the same bug through adaptive and static pipelines.
+    Not stored as bugs (so the two runs never match each other as duplicates); saved to `comparisons`."""
+    data = {k: v for k, v in bug.model_dump().items() if k != "mode"}
+    adaptive = serialize_state(None, run_triage({**data, "bug_id": None}, mode="adaptive"))
+    static = serialize_state(None, run_triage({**data, "bug_id": None}, mode="static"))
+    summary = repository.compare_summary(adaptive, static)
+    comparison_id = repository.save_comparison(data, adaptive, static, summary)
+    return {"comparison_id": comparison_id, "adaptive": adaptive, "static": static, "summary": summary}
+
+
+@app.get("/api/comparisons")
+def comparisons():
+    return repository.list_comparisons()
 
 
 @app.get("/api/bugs")

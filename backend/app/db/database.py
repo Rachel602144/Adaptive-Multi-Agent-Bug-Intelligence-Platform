@@ -102,5 +102,17 @@ class ProcessingHistory(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class Comparison(Base):
+    """Adaptive vs static run of the same bug (research ablation). Not part of the duplicate corpus."""
+    __tablename__ = "comparisons"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text, default="")
+    adaptive: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    static: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    summary: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 def init_db():
     Base.metadata.create_all(engine)
