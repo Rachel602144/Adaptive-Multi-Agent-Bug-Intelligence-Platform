@@ -4,7 +4,7 @@ from collections import Counter
 from sqlalchemy import func, select
 
 from app.graph.serialize import serialize_state
-from app.db.database import AgentResult, Bug, HistoricalBug, ProcessingHistory, Recommendation, SessionLocal
+from app.db.database import AgentResult, Bug, Comparison, HistoricalBug, ProcessingHistory, Recommendation, SessionLocal
 
 
 def load_comparable_bugs() -> list[dict]:
@@ -89,27 +89,13 @@ def list_bugs(limit: int = 200) -> list[dict]:
                 "team": rec.team if rec else None, "category": rec.category if rec else None,
                 "module": rec.module if rec else None, "is_duplicate": rec.is_duplicate if rec else False,
                 "duplicate_of": rec.duplicate_of if rec else None,
-                "agents_run": path, "total_ms": (bug.result or {}).get("metrics", {}).get("total_ms"),
+                "agents_run": path, "agents_run_count": len(path),
+                "total_ms": (bug.result or {}).get("metrics", {}).get("total_ms"),
+                "llm_calls": (bug.result or {}).get("metrics", {}).get("llm_calls", 0),
+                "tokens": (bug.result or {}).get("metrics", {}).get("tokens", 0),
+                "short_circuit": (bug.result or {}).get("short_circuit", False),
             })
         return out
-
-
-def _efficiency_by_mode(triaged_bugs: list[Bug]) -> dict:
-    out = {}
-    for mode in ("adaptive", "static"):
-        bugs = [b for b in triaged_bugs if b.mode == mode]
-        n = len(bugs)
-        if n == 0:
-            out[mode] = {"count": 0, "avg_agents_run": 0, "avg_total_ms": 0, "avg_llm_calls": 0}
-            continue
-        metrics = [(b.result or {}).get("metrics", {}) for b in bugs]
-        out[mode] = {
-            "count": n,
-            "avg_agents_run": round(sum(m.get("agents_run", 0) for m in metrics) / n, 2),
-            "avg_total_ms": round(sum(m.get("total_ms", 0) for m in metrics) / n, 1),
-            "avg_llm_calls": round(sum(m.get("llm_calls", 0) for m in metrics) / n, 2),
-        }
-    return out
 
 
 def stats() -> dict:
@@ -120,7 +106,8 @@ def stats() -> dict:
         agent_rows = s.execute(select(AgentResult.agent, AgentResult.status, func.count(), func.avg(AgentResult.ms))
                                .group_by(AgentResult.agent, AgentResult.status)).all()
         runs = list(s.scalars(select(ProcessingHistory).where(ProcessingHistory.event == "triaged")))
-        triaged_bugs = list(s.scalars(select(Bug).where(Bug.status == "triaged")))
+        mode_rows = [(b.mode, (b.result or {}).get("metrics", {})) for b in s.scalars(select(Bug).where(Bug.status == "triaged"))]
+        comps = [c.summary for c in s.scalars(select(Comparison)) if c.summary]
     sev = Counter(r.severity for r in recs)
     agent_usage: dict = {}
     for agent, status, count, avg_ms in agent_rows:
@@ -143,5 +130,63 @@ def stats() -> dict:
         "agent_usage": agent_usage,
         "avg_total_ms": int(sum(r.total_ms for r in runs) / len(runs)) if runs else 0,
         "avg_llm_calls": round(sum(r.llm_calls for r in runs) / len(runs), 2) if runs else 0,
-        "efficiency_by_mode": _efficiency_by_mode(triaged_bugs),
+        "by_mode": _by_mode(mode_rows),
+        "comparisons": _comparison_summary(comps),
     }
+
+
+def _avg(values: list) -> float:
+    return round(sum(values) / len(values), 2) if values else 0
+
+
+def _by_mode(rows: list) -> dict:
+    out = {}
+    for mode in ["adaptive", "static"]:
+        m = [metrics for md, metrics in rows if md == mode]
+        out[mode] = {"runs": len(m),
+                     "avg_agents_run": _avg([x.get("agents_run", 0) for x in m]),
+                     "avg_total_ms": _avg([x.get("total_ms", 0) for x in m]),
+                     "avg_llm_calls": _avg([x.get("llm_calls", 0) for x in m]),
+                     "avg_tokens": _avg([x.get("tokens", 0) for x in m])}
+    return out
+
+
+def _comparison_summary(summaries: list) -> dict:
+    keys = ["agents_saved", "time_saved_ms", "llm_calls_saved", "tokens_saved"]
+    out = {"count": len(summaries)}
+    for k in keys:
+        out[f"avg_{k}"] = _avg([x.get(k, 0) for x in summaries])
+    for k in ["same_priority", "same_severity", "same_team"]:
+        out[f"{k}_rate"] = _avg([1 if x.get(k) else 0 for x in summaries])
+    return out
+
+
+def compare_summary(adaptive: dict, static: dict) -> dict:
+    a, st = adaptive["metrics"], static["metrics"]
+    ad, sd = adaptive.get("decision") or {}, static.get("decision") or {}
+    return {
+        "agents_saved": st["agents_run"] - a["agents_run"],
+        "time_saved_ms": st["total_ms"] - a["total_ms"],
+        "llm_calls_saved": st["llm_calls"] - a["llm_calls"],
+        "tokens_saved": st["tokens"] - a["tokens"],
+        "same_priority": ad.get("priority") == sd.get("priority"),
+        "same_severity": ad.get("severity") == sd.get("severity"),
+        "same_team": ad.get("team") == sd.get("team"),
+        "adaptive_path": [e["agent"] for e in adaptive["execution_trace"] if e["status"] == "ran"],
+    }
+
+
+def save_comparison(bug: dict, adaptive: dict, static: dict, summary: dict) -> int:
+    with SessionLocal() as s:
+        c = Comparison(title=bug["title"], description=bug.get("description") or "",
+                       adaptive=adaptive, static=static, summary=summary)
+        s.add(c)
+        s.commit()
+        return c.id
+
+
+def list_comparisons(limit: int = 200) -> list[dict]:
+    with SessionLocal() as s:
+        rows = s.scalars(select(Comparison).order_by(Comparison.id.desc()).limit(limit))
+        return [{"id": c.id, "title": c.title, "created_at": c.created_at.isoformat() if c.created_at else None,
+                 **(c.summary or {})} for c in rows]

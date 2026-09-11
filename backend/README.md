@@ -40,7 +40,9 @@ scripts/evaluate.py    ablation: adaptive vs static → reports/
 
 ## API
 - `POST /api/bugs` `{title, description, stack_trace?, environment?, mode?: "adaptive"|"static"}`
-- `GET /api/bugs` · `GET /api/bugs/{id}` · `GET /api/stats` · `GET /api/teams` · `GET /health`
+- `GET /api/bugs` · `GET /api/bugs/{id}` · `GET /api/stats` (incl. `by_mode`, `comparisons`) · `GET /api/teams` · `GET /health`
+- `POST /api/compare` `{title, description, stack_trace?}` → runs adaptive + static on the same bug → `{adaptive, static, summary}` (saved to `comparisons`, not to bugs)
+- `GET /api/comparisons` → all past comparisons with savings
 
 Response shape: `contracts/samples/*.json` (full path, light path, duplicate path).
 
