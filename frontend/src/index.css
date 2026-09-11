@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Consolas, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+::selection {
+  @apply bg-indigo-500/30;
+}
+
+/* shadcn-style surface: rounded-xl, quiet border, bg-slate-900 */
+.card {
+  @apply rounded-xl border border-slate-800 bg-slate-900 shadow-sm;
+}
