@@ -1,6 +1,5 @@
 # Adaptive Multi-Agent Bug Intelligence Platform
 
-Team: Rachel Patni (graph + API + integration), Khushi Yadav (data + ML + DB), Isha S U (frontend).
 
 
 
