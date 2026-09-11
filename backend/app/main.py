@@ -24,10 +24,11 @@ def startup():
     init_db()
     duplicate.set_loader(repository.load_comparable_bugs)
     duplicate.refresh(force=True)  # build the TF-IDF index now, not on the first request
-    if llm.llm_available():  # warm up the Gemini client so the first real bug isn't slow
-        import threading
-
-        threading.Thread(target=lambda: llm.call_json('Return {"ok": true}'), daemon=True).start()
+    if llm.llm_available():  # build the Gemini client now (no API call — saves free-tier quota)
+        try:
+            llm._client(0)
+        except Exception as e:
+            logging.warning("Gemini client init failed: %s", e)
 
 
 class BugIn(BaseModel):
@@ -40,7 +41,7 @@ class BugIn(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "llm": llm.llm_available(), "model": config.GEMINI_MODEL, "mode": config.DEFAULT_MODE}
+    return {"ok": True, "llm": llm.llm_available(), "gemini": llm.status(), "mode": config.DEFAULT_MODE}
 
 
 @app.post("/api/bugs")

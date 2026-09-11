@@ -26,7 +26,7 @@ def agent_node(name: str, run: Callable[[dict], tuple[dict, dict]], fallback: Ca
         extra = updates.pop("execution_trace", [])
         entry = {"agent": name, "status": status, "ms": ms,
                  "llm_calls": usage.get("llm_calls", 0), "tokens": usage.get("tokens", 0),
-                 "source": usage.get("source", "")}
+                 "source": usage.get("source", ""), "model": usage.get("model")}
         return {**updates, "execution_trace": extra + [entry], "errors": errors}
 
     node.__name__ = name
