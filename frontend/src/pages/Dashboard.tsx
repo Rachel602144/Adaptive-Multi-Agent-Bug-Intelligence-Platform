@@ -27,6 +27,17 @@ const SEVERITY_COLOR: Record<string, string> = {
   Low: "#22c55e",
 };
 
+const AGENT_LABEL: Record<string, string> = {
+  supervisor: "Supervisor",
+  bug_analysis: "Bug Analysis",
+  duplicate: "Duplicate Check",
+  severity: "Severity",
+  assignment: "Assignment",
+  engineering_decision: "Eng. Decision",
+};
+
+const AGENT_ORDER = ["supervisor", "bug_analysis", "duplicate", "severity", "assignment", "engineering_decision"];
+
 const TOOLTIP_STYLE = {
   borderRadius: 8,
   border: "1px solid #1e293b",
@@ -60,10 +71,7 @@ function SeverityDonut({ data }: { data: { name: string; value: number }[] }) {
       <div className="mt-2 flex flex-wrap justify-center gap-3">
         {data.map((d) => (
           <div key={d.name} className="flex items-center gap-1.5 text-xs text-slate-400">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ background: SEVERITY_COLOR[d.name] ?? "#6366f1" }}
-            />
+            <span className="h-2 w-2 rounded-full" style={{ background: SEVERITY_COLOR[d.name] ?? "#6366f1" }} />
             {d.name} ({d.value})
           </div>
         ))}
@@ -120,15 +128,50 @@ export function Dashboard() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Total bugs" value={stats.total} />
-        <StatCard label="Critical" value={stats.by_severity["Critical"] ?? 0} accent="danger" />
-        <StatCard label="High" value={stats.by_severity["High"] ?? 0} accent="warning" />
+        <StatCard label="Critical" value={stats.critical} accent="danger" />
+        <StatCard label="High" value={stats.high} accent="warning" />
         <StatCard label="Duplicates caught" value={stats.duplicates} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <StatCard label="Avg. latency / bug" value={`${stats.avg_total_ms} ms`} />
+        <StatCard label="Avg. LLM calls / bug" value={stats.avg_llm_calls} />
+        <StatCard label="Historical bugs indexed" value={stats.historical_bugs} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
         <SeverityDonut data={toChartData(stats.by_severity)} />
         <BarChartCard title="By category" data={toChartData(stats.by_category)} />
         <BarChartCard title="By team" data={toChartData(stats.by_team)} />
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Agent usage</h2>
+        <Table>
+          <THead>
+            <tr>
+              <TH>Agent</TH>
+              <TH>Ran</TH>
+              <TH>Skipped</TH>
+              <TH>Failed</TH>
+              <TH>Avg ms (when ran)</TH>
+            </tr>
+          </THead>
+          <TBody>
+            {AGENT_ORDER.map((agent) => {
+              const u = stats.agent_usage[agent] ?? { ran: 0, skipped: 0, failed: 0, avg_ms: 0 };
+              return (
+                <TR key={agent}>
+                  <TD className="font-medium text-slate-200">{AGENT_LABEL[agent]}</TD>
+                  <TD className="tabular-nums text-indigo-400">{u.ran}</TD>
+                  <TD className="tabular-nums text-slate-500">{u.skipped}</TD>
+                  <TD className="tabular-nums text-red-400">{u.failed}</TD>
+                  <TD className="tabular-nums">{u.ran > 0 ? `${u.avg_ms} ms` : "—"}</TD>
+                </TR>
+              );
+            })}
+          </TBody>
+        </Table>
       </div>
 
       <div>
@@ -153,9 +196,9 @@ export function Dashboard() {
                 <TR key={bug.bug_id} onClick={() => navigate(`/bugs/${bug.bug_id}`)}>
                   <TD className="tabular-nums text-slate-500">#{bug.bug_id}</TD>
                   <TD className="max-w-xs truncate font-medium text-slate-200">{bug.title}</TD>
-                  <TD>{bug.severity ? <SeverityBadge label={bug.severity.label} /> : "—"}</TD>
-                  <TD>{bug.assignment?.team ?? "—"}</TD>
-                  <TD>{bug.decision?.priority ?? "—"}</TD>
+                  <TD>{bug.severity ? <SeverityBadge label={bug.severity} /> : "—"}</TD>
+                  <TD>{bug.team ?? "—"}</TD>
+                  <TD>{bug.priority ?? "—"}</TD>
                 </TR>
               ))}
             </TBody>

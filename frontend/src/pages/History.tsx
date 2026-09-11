@@ -24,7 +24,7 @@ export function History() {
   const filtered = useMemo(() => {
     if (!bugs) return [];
     const sorted = [...bugs].sort((a, b) => b.bug_id - a.bug_id);
-    return filter === "All" ? sorted : sorted.filter((b) => b.severity?.label === filter);
+    return filter === "All" ? sorted : sorted.filter((b) => b.severity === filter);
   }, [bugs, filter]);
 
   if (isLoading) return <LoadingState message="Loading bugs…" />;
@@ -79,17 +79,26 @@ export function History() {
               <TH>Category</TH>
               <TH>Team</TH>
               <TH>Priority</TH>
+              <TH>Path</TH>
             </tr>
           </THead>
           <TBody>
             {filtered.map((bug) => (
               <TR key={bug.bug_id} onClick={() => navigate(`/bugs/${bug.bug_id}`)}>
                 <TD className="tabular-nums text-slate-500">#{bug.bug_id}</TD>
-                <TD className="max-w-xs truncate font-medium text-slate-200">{bug.title}</TD>
-                <TD>{bug.severity ? <SeverityBadge label={bug.severity.label} /> : <span className="text-slate-600">—</span>}</TD>
-                <TD>{bug.analysis?.category ?? "—"}</TD>
-                <TD>{bug.assignment?.team ?? "—"}</TD>
-                <TD>{bug.decision?.priority ?? "—"}</TD>
+                <TD className="max-w-xs truncate font-medium text-slate-200">
+                  {bug.title}
+                  {bug.is_duplicate && (
+                    <span className="ml-2 rounded-full bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                      duplicate
+                    </span>
+                  )}
+                </TD>
+                <TD>{bug.severity ? <SeverityBadge label={bug.severity} /> : <span className="text-slate-600">—</span>}</TD>
+                <TD>{bug.category ?? "—"}</TD>
+                <TD>{bug.team ?? "—"}</TD>
+                <TD>{bug.priority ?? "—"}</TD>
+                <TD className="tabular-nums text-slate-500">{bug.agents_run.length} / 6</TD>
               </TR>
             ))}
           </TBody>

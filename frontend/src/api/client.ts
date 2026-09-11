@@ -1,4 +1,11 @@
-import type { BugInput, BugState, StatsResponse, Team } from "../types/bug";
+import type {
+  BugInput,
+  BugState,
+  BugSummary,
+  HealthResponse,
+  StatsResponse,
+  TeamsResponse,
+} from "../types/bug";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
@@ -31,7 +38,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  health: () => request<{ ok: boolean }>("/health"),
+  health: () => request<HealthResponse>("/health"),
 
   submitBug: (bug: BugInput) =>
     request<BugState>("/api/bugs", {
@@ -39,11 +46,11 @@ export const api = {
       body: JSON.stringify(bug),
     }),
 
-  listBugs: () => request<BugState[]>("/api/bugs"),
+  listBugs: () => request<BugSummary[]>("/api/bugs"),
 
   getBug: (id: number) => request<BugState>(`/api/bugs/${id}`),
 
   getStats: () => request<StatsResponse>("/api/stats"),
 
-  getTeams: () => request<Team[]>("/api/teams"),
+  getTeams: () => request<TeamsResponse>("/api/teams"),
 };

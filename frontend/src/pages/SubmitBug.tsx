@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
 import { Button } from "../components/ui/Button";
+import type { Mode } from "../types/bug";
 
 const DEMO_BUGS = [
   {
@@ -39,6 +40,7 @@ export function SubmitBug() {
   const [description, setDescription] = useState("");
   const [stackTrace, setStackTrace] = useState("");
   const [environment, setEnvironment] = useState("");
+  const [mode, setMode] = useState<Mode>("adaptive");
   const [touched, setTouched] = useState(false);
 
   const mutation = useMutation({
@@ -46,19 +48,21 @@ export function SubmitBug() {
     onSuccess: (bug) => navigate(`/bugs/${bug.bug_id}`),
   });
 
-  const titleError = touched && title.trim().length === 0;
+  const titleTooShort = title.trim().length > 0 && title.trim().length < 3;
+  const titleError = touched && (title.trim().length === 0 || titleTooShort);
   const descriptionError = touched && description.trim().length === 0;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setTouched(true);
-    if (title.trim().length === 0 || description.trim().length === 0) return;
+    if (title.trim().length < 3 || description.trim().length === 0) return;
 
     mutation.mutate({
       title: title.trim(),
       description: description.trim(),
       stack_trace: stackTrace.trim() || undefined,
       environment: environment.trim() || undefined,
+      mode,
     });
   }
 
@@ -108,9 +112,14 @@ export function SubmitBug() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Short, specific summary"
+            maxLength={300}
             className={inputClass}
           />
-          {titleError && <p className="mt-1 text-xs text-red-400">Title is required.</p>}
+          {titleError && (
+            <p className="mt-1 text-xs text-red-400">
+              {title.trim().length === 0 ? "Title is required." : "Title needs at least 3 characters."}
+            </p>
+          )}
         </div>
 
         <div>
@@ -123,6 +132,7 @@ export function SubmitBug() {
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
             placeholder="What happened, what did you expect instead, steps to reproduce"
+            maxLength={10000}
             className={inputClass}
           />
           {descriptionError && <p className="mt-1 text-xs text-red-400">Description is required.</p>}
@@ -138,6 +148,7 @@ export function SubmitBug() {
             onChange={(e) => setStackTrace(e.target.value)}
             rows={3}
             placeholder="Paste a traceback if you have one"
+            maxLength={20000}
             className={`${inputClass} font-mono text-xs`}
           />
         </div>
@@ -151,8 +162,32 @@ export function SubmitBug() {
             value={environment}
             onChange={(e) => setEnvironment(e.target.value)}
             placeholder="e.g. prod, Chrome 128"
+            maxLength={500}
             className={inputClass}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300">Routing mode</label>
+          <div className="mt-1.5 flex overflow-hidden rounded-lg border border-slate-700">
+            {(["adaptive", "static"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`flex-1 px-3 py-2 text-sm font-medium capitalize transition ${
+                  mode === m ? "bg-indigo-500 text-white" : "text-slate-400 hover:bg-slate-900"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-xs text-slate-500">
+            {mode === "adaptive"
+              ? "The supervisor decides which agents run."
+              : "Baseline mode — every agent runs on every bug, for comparison."}
+          </p>
         </div>
 
         {mutation.isError && (

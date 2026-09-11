@@ -75,7 +75,10 @@ export function AgentTraceStepper({ trace }: { trace: ExecutionTraceEntry[] }) {
                   {status}
                 </div>
                 {entry && (
-                  <div className="mt-0.5 text-[11px] tabular-nums text-slate-500">{entry.ms} ms</div>
+                  <div className="mt-0.5 text-[11px] tabular-nums text-slate-500">
+                    {entry.ms} ms
+                    {entry.llm_calls > 0 && ` · ${entry.tokens} tok`}
+                  </div>
                 )}
               </motion.div>
               {!isLast && (
