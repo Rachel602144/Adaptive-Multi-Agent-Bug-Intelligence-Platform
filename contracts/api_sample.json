@@ -1,0 +1,37 @@
+{
+  "bug_id": 42,
+  "title": "HTTP 500 after password reset",
+  "description": "Users get a 500 error when logging in right after resetting their password.",
+  "stack_trace": "Traceback ... auth/service.py line 88 in verify_token ... KeyError: 'reset_ts'",
+  "environment": "prod, Chrome 128",
+  "selected_agents": ["duplicate", "severity", "assignment"],
+  "supervisor_reason": "Backend auth failure with stack trace; user-facing login impact — full analysis required.",
+  "analysis": {
+    "category": "Backend",
+    "module": "Authentication",
+    "nature": "Server error on login after password reset",
+    "possible_cause": "Missing reset timestamp in token verification",
+    "technical_info": "KeyError 'reset_ts' in verify_token"
+  },
+  "duplicate": {"is_duplicate": false, "match_id": 17, "match_title": "Session expires early", "score": 0.31},
+  "severity": {"label": "Critical", "confidence": 0.87},
+  "assignment": {"team": "Backend Team", "rule": "Authentication -> Backend Team"},
+  "decision": {
+    "priority": "P1",
+    "recommended_action": "Investigate immediately",
+    "team": "Backend Team",
+    "target_release": "Hotfix",
+    "estimated_resolution": "1-2 days",
+    "possible_cause": "Missing reset timestamp in token verification",
+    "explanation": "Critical, non-duplicate authentication failure blocking user login."
+  },
+  "execution_trace": [
+    {"agent": "supervisor", "status": "ran", "ms": 1200},
+    {"agent": "bug_analysis", "status": "ran", "ms": 2100},
+    {"agent": "duplicate", "status": "ran", "ms": 40},
+    {"agent": "severity", "status": "ran", "ms": 15},
+    {"agent": "assignment", "status": "ran", "ms": 5},
+    {"agent": "engineering_decision", "status": "ran", "ms": 1800}
+  ],
+  "errors": []
+}

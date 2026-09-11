@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic
+langgraph
+langchain
+langchain-google-genai
+scikit-learn
+pandas
+joblib
+psycopg[binary]
+sqlalchemy
+python-dotenv
