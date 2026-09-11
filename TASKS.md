@@ -12,7 +12,7 @@ Check-ins (5 min call): 1am, 9am, 1pm, 4pm. Stuck >30 min → say it in the grou
 
 ---
 
-## Rachel — Entire Backend (lead)
+## Rachel — Entire Backend
 Folders: `backend/`, `contracts/`
 
 ### 1. LangGraph orchestration — `backend/app/graph/`
