@@ -1,0 +1,95 @@
+{
+  "bug_id": 43,
+  "title": "Spelling mistake on the About Us page",
+  "description": "The heading says 'Abuot Us' instead of 'About Us'.",
+  "stack_trace": null,
+  "environment": null,
+  "mode": "adaptive",
+  "selected_agents": [],
+  "supervisor_reason": "Rule: cosmetic UI issue with no failure signals \u2014 light path (analysis + decision only).",
+  "short_circuit": false,
+  "analysis": {
+    "category": "Frontend",
+    "module": "UI",
+    "nature": "Spelling mistake on the About Us page",
+    "possible_cause": "Needs investigation",
+    "technical_info": "",
+    "source": "rules"
+  },
+  "duplicate": null,
+  "severity": null,
+  "assignment": null,
+  "decision": {
+    "severity": "Low",
+    "severity_source": "rule estimate (severity agent not selected)",
+    "team": "Frontend Team",
+    "team_source": "module rule (assignment agent not selected)",
+    "priority": "P4",
+    "core_module_bump": false,
+    "recommended_action": "Add to backlog",
+    "target_release": "Backlog",
+    "estimated_resolution": "2\u20134 weeks",
+    "possible_cause": "Needs investigation",
+    "is_duplicate": false,
+    "duplicate_of": null,
+    "explanation": "Low frontend issue in the UI module (rule estimate (severity agent not selected)). Routed to Frontend Team (module rule (assignment agent not selected)); priority P4.",
+    "explanation_source": "template"
+  },
+  "execution_trace": [
+    {
+      "agent": "supervisor",
+      "status": "ran",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "rules"
+    },
+    {
+      "agent": "bug_analysis",
+      "status": "ran",
+      "ms": 1,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "rules"
+    },
+    {
+      "agent": "duplicate",
+      "status": "skipped",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "not selected by supervisor"
+    },
+    {
+      "agent": "severity",
+      "status": "skipped",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "not selected by supervisor"
+    },
+    {
+      "agent": "assignment",
+      "status": "skipped",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "not selected by supervisor"
+    },
+    {
+      "agent": "engineering_decision",
+      "status": "ran",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "template"
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "total_ms": 1,
+    "llm_calls": 0,
+    "tokens": 0,
+    "agents_run": 3
+  }
+}

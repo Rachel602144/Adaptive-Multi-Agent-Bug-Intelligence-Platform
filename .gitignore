@@ -10,3 +10,4 @@ dist/
 # trained models: commit only the final one deliberately
 backend/app/ml/*.pkl
 !backend/app/ml/severity_model.pkl
+*.db

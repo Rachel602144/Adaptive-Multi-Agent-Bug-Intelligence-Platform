@@ -1,4 +1,4 @@
-"""SHARED CONTRACT — copy of backend/app/graph/state.py. API response shape: contracts/samples/*.json"""
+"""Shared LangGraph state (mirrors contracts/state.py)."""
 import operator
 from typing import Annotated, Optional, TypedDict
 

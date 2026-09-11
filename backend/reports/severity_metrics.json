@@ -1,0 +1,86 @@
+{
+  "dataset": "severity_dataset.csv",
+  "rows": 87959,
+  "class_counts": {
+    "Medium": 71627,
+    "Critical": 6618,
+    "Low": 5180,
+    "High": 4534
+  },
+  "test_size": 17592,
+  "accuracy": 0.646,
+  "macro_f1": 0.4585,
+  "per_class": {
+    "Critical": {
+      "precision": 0.5401459854014599,
+      "recall": 0.7265861027190332,
+      "f1-score": 0.619645732689211,
+      "support": 1324.0
+    },
+    "High": {
+      "precision": 0.13527744025921426,
+      "recall": 0.36824696802646084,
+      "f1-score": 0.19786729857819904,
+      "support": 907.0
+    },
+    "Medium": {
+      "precision": 0.90140712945591,
+      "recall": 0.6707853403141362,
+      "f1-score": 0.7691815089053432,
+      "support": 14325.0
+    },
+    "Low": {
+      "precision": 0.1715137956748695,
+      "recall": 0.444015444015444,
+      "f1-score": 0.24744486282947822,
+      "support": 1036.0
+    },
+    "accuracy": 0.6460322874033652,
+    "macro avg": {
+      "precision": 0.4370860876978634,
+      "recall": 0.5524084637687685,
+      "f1-score": 0.4585348507505579,
+      "support": 17592.0
+    },
+    "weighted avg": {
+      "precision": 0.7917346148682193,
+      "recall": 0.6460322874033652,
+      "f1-score": 0.6977463951143317,
+      "support": 17592.0
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "Critical",
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "matrix": [
+      [
+        962,
+        126,
+        212,
+        24
+      ],
+      [
+        97,
+        334,
+        386,
+        90
+      ],
+      [
+        702,
+        1906,
+        9609,
+        2108
+      ],
+      [
+        20,
+        103,
+        453,
+        460
+      ]
+    ]
+  }
+}

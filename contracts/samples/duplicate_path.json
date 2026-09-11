@@ -1,0 +1,129 @@
+{
+  "bug_id": 44,
+  "title": "Authentication failure after password reset",
+  "description": "Users cannot log in after resetting their password. Login returns HTTP 500 and the session token is not created.",
+  "stack_trace": null,
+  "environment": null,
+  "mode": "adaptive",
+  "selected_agents": [
+    "duplicate",
+    "severity",
+    "assignment"
+  ],
+  "supervisor_reason": "Rule: critical signals (stack trace / server error / auth / payment / data) \u2014 full analysis.",
+  "short_circuit": true,
+  "analysis": {
+    "category": "Backend",
+    "module": "Authentication",
+    "nature": "Authentication failure after password reset",
+    "possible_cause": "Needs investigation",
+    "technical_info": "",
+    "source": "rules"
+  },
+  "duplicate": {
+    "is_duplicate": true,
+    "possible_duplicate": false,
+    "match_id": "H-1",
+    "match_source": "historical",
+    "match_title": "Authentication failure after password reset",
+    "match_severity": "Critical",
+    "match_module": "Authentication",
+    "match_team": "Backend Team",
+    "score": 1.0,
+    "top_matches": [
+      {
+        "id": "H-1",
+        "source": "historical",
+        "title": "Authentication failure after password reset",
+        "score": 1.0
+      },
+      {
+        "id": "H-54",
+        "source": "historical",
+        "title": "Login fails after password change",
+        "score": 0.217
+      },
+      {
+        "id": "H-3",
+        "source": "historical",
+        "title": "Session expires immediately after login",
+        "score": 0.091
+      }
+    ]
+  },
+  "severity": null,
+  "assignment": null,
+  "decision": {
+    "severity": "Critical",
+    "severity_source": "inherited from duplicate #H-1",
+    "team": "Backend Team",
+    "team_source": "inherited from duplicate #H-1",
+    "priority": "P1",
+    "core_module_bump": false,
+    "recommended_action": "Link to existing bug #H-1 and close as duplicate",
+    "target_release": "Tracked in original bug",
+    "estimated_resolution": "\u2014",
+    "possible_cause": "Needs investigation",
+    "is_duplicate": true,
+    "duplicate_of": "H-1",
+    "explanation": "Critical backend issue in the Authentication module (inherited from duplicate #H-1). It duplicates bug #H-1 (similarity 1.0), so no new work is needed.",
+    "explanation_source": "template"
+  },
+  "execution_trace": [
+    {
+      "agent": "supervisor",
+      "status": "ran",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "rules"
+    },
+    {
+      "agent": "bug_analysis",
+      "status": "ran",
+      "ms": 1,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "rules"
+    },
+    {
+      "agent": "duplicate",
+      "status": "ran",
+      "ms": 8,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "tfidf"
+    },
+    {
+      "agent": "severity",
+      "status": "skipped",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "duplicate short-circuit"
+    },
+    {
+      "agent": "assignment",
+      "status": "skipped",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "duplicate short-circuit"
+    },
+    {
+      "agent": "engineering_decision",
+      "status": "ran",
+      "ms": 0,
+      "llm_calls": 0,
+      "tokens": 0,
+      "source": "template"
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "total_ms": 9,
+    "llm_calls": 0,
+    "tokens": 0,
+    "agents_run": 4
+  }
+}
