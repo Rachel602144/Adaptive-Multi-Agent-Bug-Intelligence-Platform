@@ -1,0 +1,61 @@
+title,description,severity
+Authentication failure after password reset,Users cannot log in after resetting their password. Login returns HTTP 500 and the session token is not created.,critical
+Login page crashes on Safari,The login page throws a JavaScript exception and goes blank on Safari 17. Users cannot sign in.,critical
+Session expires immediately after login,Users are logged out within seconds of logging in. The JWT token expiry appears to be set incorrectly.,major
+OTP not received during two-factor login,Some users never receive the SMS OTP so they cannot complete login.,major
+Remember me checkbox does not persist session,Selecting remember me has no effect and users must log in again next day.,minor
+OAuth login with Google returns invalid state error,Google sign in fails with invalid state parameter for all users.,critical
+Password strength meter shows wrong color,The strength meter shows green for weak passwords. Cosmetic only.,trivial
+Payment fails with timeout at checkout,Checkout requests to the payment gateway time out after 30 seconds and orders are not created.,blocker
+Duplicate charge on card after retry,Customers are charged twice when they click pay again after a slow response.,blocker
+Refund status not updated in order history,Refunded orders still show as paid in the order history page.,major
+Invoice PDF shows wrong tax amount,GST is calculated on the discounted price incorrectly in generated invoices.,major
+UPI payment option missing on mobile,The UPI option does not appear in the payment methods list on Android.,major
+Currency symbol misaligned on checkout page,The rupee symbol overlaps the amount on small screens.,trivial
+Typo in checkout confirmation message,The confirmation says Thank you for you order instead of your order.,trivial
+Submit button misaligned on settings page,The save button is shifted to the right and overlaps the footer.,trivial
+Dark mode text unreadable in sidebar,Sidebar labels are dark grey on a black background in dark mode.,minor
+Profile picture not displayed after upload,The avatar upload succeeds but the old picture is still shown until refresh.,minor
+Dropdown menu closes immediately on click,The filter dropdown closes as soon as it opens on Firefox.,normal
+Modal cannot be closed on mobile,The close icon on the share modal is not clickable on iPhone.,normal
+Font size too small on pricing table,Pricing table text is 10px and hard to read.,trivial
+Spelling mistake on homepage banner,The banner says Wellcome instead of Welcome.,trivial
+Tooltip shows raw HTML tags,The help tooltip renders escaped HTML tags instead of formatted text.,minor
+Database deadlock during order update,Concurrent order updates cause deadlocks and transactions are rolled back.,critical
+Data loss when migrating user table,The migration script drops the phone number column values for existing users.,blocker
+Slow query on reports page,The monthly report query takes over 40 seconds because of a missing index.,major
+Search results return deleted products,Products that were deleted still appear in search results.,normal
+Search autocomplete lags on every keystroke,Autocomplete requests fire on every key and the input freezes.,normal
+Filter by date returns empty results,Filtering orders by a date range always returns no results.,major
+Sort by price is ascending when descending selected,Choosing high to low sorts products low to high.,minor
+API returns 500 when request body is empty,POST /api/orders with an empty body throws an unhandled NullPointerException.,major
+API endpoint returns 404 for valid user id,GET /api/users/{id} returns 404 for users created after the last deploy.,major
+Rate limiter blocks legitimate API clients,The API rate limit counts requests per server instead of per client and blocks valid users.,major
+JSON response missing created_at field,The orders API response no longer includes the created_at timestamp.,normal
+Email notifications not sent after signup,New users do not receive the welcome email. The mail queue shows failed jobs.,major
+Push notification opens wrong screen,Tapping an order notification opens the home screen instead of the order.,minor
+SMS alerts sent twice,Delivery SMS alerts are sent twice to every customer.,normal
+Memory leak in background worker,The worker process memory grows until it is killed every few hours.,critical
+Dashboard loads slowly with many projects,The dashboard takes 15 seconds to load for accounts with over 100 projects.,major
+App freezes when uploading large files,The browser tab hangs when uploading files larger than 50MB.,major
+High CPU usage on image resize service,The image service uses 100 percent CPU during peak hours.,major
+XSS vulnerability in comment field,Script tags in comments are executed when other users view the page.,blocker
+Unauthorized users can access admin page,Users without admin role can open /admin by typing the URL.,blocker
+API keys exposed in frontend bundle,Secret keys are visible in the compiled JavaScript bundle.,critical
+Server crashes after deploy on Friday,The production server crashes on startup with a missing environment variable.,blocker
+Docker build fails on CI,The CI pipeline fails because the base image tag was removed.,major
+Website down for users in Europe,The CDN returns 503 for all requests from European regions.,blocker
+Pagination skips items on page two,The second page of results skips five items.,normal
+Export to CSV has wrong column order,Exported CSV files have the email and name columns swapped.,minor
+Language switcher does not translate buttons,Switching to Hindi translates labels but not buttons.,minor
+Chart legend overlaps the chart on small screens,The legend covers the bars on screens narrower than 400px.,trivial
+Cart total not updated after removing item,Removing an item from the cart does not update the total price.,major
+Coupon code applied twice,A single coupon can be applied twice to the same order.,major
+Order confirmation page shows blank screen,After payment the confirmation page is blank but the order is created.,major
+Login fails after password change,After changing their password users get an error when logging in again.,critical
+Checkout page crashes on applying gift card,Applying a gift card throws an exception and the checkout page crashes.,critical
+Notification bell count incorrect,The unread count shows 0 even when there are new notifications.,minor
+Search is case sensitive,Searching iphone does not return iPhone products.,normal
+Timezone wrong on order timestamps,Order times are shown in UTC instead of the user's local time.,normal
+Account deletion does not remove user data,Deleted accounts still have personal data stored in the database.,critical
+Broken link in footer,The privacy policy link in the footer returns 404.,trivial

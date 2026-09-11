@@ -1,13 +1,16 @@
-"""Khushi's functions — STUBS. Replace bodies, keep signatures exactly."""
+"""Stable ML interfaces used by the graph. Keep these signatures."""
+from typing import Optional
+
+from app.ml import assignment, duplicate, severity
 
 
 def predict_severity(text: str) -> dict:
-    return {"label": "Medium", "confidence": 0.5}
+    return severity.predict_severity(text)
 
 
-def detect_duplicate(title: str, description: str) -> dict:
-    return {"is_duplicate": False, "match_id": None, "match_title": None, "score": 0.0}
+def detect_duplicate(title: str, description: str, exclude: Optional[tuple] = None) -> dict:
+    return duplicate.detect(title, description, exclude)
 
 
-def assign_team(module: str, category: str) -> dict:
-    return {"team": "Backend Team", "rule": "default"}
+def assign_team(module: str, category: str, text: str = "") -> dict:
+    return assignment.assign(module, category, text)
