@@ -40,12 +40,19 @@ Build against `contracts/api_sample.json` until the real API is live — don't w
 **By 1am:** Submit + Result on mock data · **1pm:** all pages on real API, deployed
 
 ## Khushi — Data, Evaluation, Report (`data/`, `docs/`)
-1. **Severity dataset (first priority)** — real Eclipse/Mozilla bug data, ~2,000+ rows, with source cited (no AI-generated data; prefer one with duplicate links). Map blocker/critical → Critical · major → High · normal → Medium · minor/trivial → Low → `data/severity_dataset.csv` (`title, description, severity`)
-2. **Module → team map** — 8–10 modules with team + keywords → `data/module_team_map.csv`
-3. **Test bugs** — 3 demo bugs + 15 test bugs with expected severity, team, path → `data/test_bugs.csv`
-4. **Duplicate pairs** — 10 duplicates + 10 near-misses → `data/duplicate_pairs.csv`
-5. **Evaluation + testing** — metric screenshots, expected vs actual results, edge-case testing on the live app
-6. **Report, slides (8–10) + 5-min demo script**
+**1. Severity dataset (first priority tonight)**
+- Real Eclipse / Mozilla Bugzilla data (Kaggle, GitHub), ~2,000+ rows · no AI-generated data · save source + citation
+- Prefer a dataset with duplicate links (used for duplicate evaluation)
+- Map: blocker, critical → Critical · major → High · normal → Medium · minor, trivial → Low · drop enhancement
+- Clean empty / duplicate / non-English rows → `data/severity_dataset.csv` (`title, description, severity`); note class counts
+
+**2. Module → team map** — 8–10 modules (Authentication, Payment, UI, Database, API, …), each with team + keywords → `data/module_team_map.csv`
+**3. Test bugs** — 3 demo bugs (UI typo · HTTP 500 after password reset · "Authentication failure after password reset") + 15 test bugs with expected severity, team, path → `data/test_bugs.csv`
+**4. Duplicate pairs** — 10 real duplicates + 10 similar-but-different → `data/duplicate_pairs.csv`; compute precision / recall
+**5. Evaluation** — screenshots of accuracy, F1, confusion matrix; expected vs actual table for all 18 bugs; latency per path
+**6. Testing** — edge cases on the live app (empty fields, long text, gibberish); report issues with screenshots
+**7. Report** — Problem, Related work, Architecture, Implementation, Results, Limitations, Future work
+**8. Slides + demo** — 8–10 slides; 5-min demo script (who clicks what, which bug, what to say)
 
 ## Research Paper Track (after the demo)
 1. **Ablation:** adaptive vs static — latency, LLM calls/tokens, accuracy (main result)
