@@ -94,6 +94,24 @@ def list_bugs(limit: int = 200) -> list[dict]:
         return out
 
 
+def _efficiency_by_mode(triaged_bugs: list[Bug]) -> dict:
+    out = {}
+    for mode in ("adaptive", "static"):
+        bugs = [b for b in triaged_bugs if b.mode == mode]
+        n = len(bugs)
+        if n == 0:
+            out[mode] = {"count": 0, "avg_agents_run": 0, "avg_total_ms": 0, "avg_llm_calls": 0}
+            continue
+        metrics = [(b.result or {}).get("metrics", {}) for b in bugs]
+        out[mode] = {
+            "count": n,
+            "avg_agents_run": round(sum(m.get("agents_run", 0) for m in metrics) / n, 2),
+            "avg_total_ms": round(sum(m.get("total_ms", 0) for m in metrics) / n, 1),
+            "avg_llm_calls": round(sum(m.get("llm_calls", 0) for m in metrics) / n, 2),
+        }
+    return out
+
+
 def stats() -> dict:
     with SessionLocal() as s:
         recs = list(s.scalars(select(Recommendation)))
@@ -102,6 +120,7 @@ def stats() -> dict:
         agent_rows = s.execute(select(AgentResult.agent, AgentResult.status, func.count(), func.avg(AgentResult.ms))
                                .group_by(AgentResult.agent, AgentResult.status)).all()
         runs = list(s.scalars(select(ProcessingHistory).where(ProcessingHistory.event == "triaged")))
+        triaged_bugs = list(s.scalars(select(Bug).where(Bug.status == "triaged")))
     sev = Counter(r.severity for r in recs)
     agent_usage: dict = {}
     for agent, status, count, avg_ms in agent_rows:
@@ -124,4 +143,5 @@ def stats() -> dict:
         "agent_usage": agent_usage,
         "avg_total_ms": int(sum(r.total_ms for r in runs) / len(runs)) if runs else 0,
         "avg_llm_calls": round(sum(r.llm_calls for r in runs) / len(runs), 2) if runs else 0,
+        "efficiency_by_mode": _efficiency_by_mode(triaged_bugs),
     }

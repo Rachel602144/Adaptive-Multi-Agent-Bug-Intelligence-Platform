@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Download } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
@@ -7,7 +8,29 @@ import { LoadingState } from "../components/LoadingState";
 import { SeverityBadge } from "../components/SeverityBadge";
 import { Card } from "../components/ui/Card";
 import { Table, TBody, TD, TH, THead, TR } from "../components/ui/Table";
-import type { Severity } from "../types/bug";
+import { downloadCsv, toCsv } from "../lib/csv";
+import type { BugSummary, Severity } from "../types/bug";
+
+function exportBugsCsv(bugs: BugSummary[]) {
+  const rows = bugs.map((b) => ({
+    bug_id: b.bug_id,
+    title: b.title,
+    mode: b.mode,
+    status: b.status,
+    severity: b.severity ?? "",
+    priority: b.priority ?? "",
+    team: b.team ?? "",
+    category: b.category ?? "",
+    module: b.module ?? "",
+    is_duplicate: b.is_duplicate,
+    duplicate_of: b.duplicate_of ?? "",
+    agents_run: b.agents_run.length,
+    agents_run_list: b.agents_run.join(" "),
+    total_ms: b.total_ms ?? "",
+    created_at: b.created_at ?? "",
+  }));
+  downloadCsv(`bug-runs-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(rows));
+}
 
 const SEVERITIES: Severity[] = ["Critical", "High", "Medium", "Low"];
 
@@ -44,20 +67,31 @@ export function History() {
     <div className="mx-auto max-w-6xl space-y-5 px-6 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-white">Bug history</h1>
-        <div className="flex gap-1.5">
-          {(["All", ...SEVERITIES] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
-                filter === s
-                  ? "bg-indigo-500 text-white"
-                  : "border border-slate-700 text-slate-400 hover:border-indigo-500 hover:text-indigo-400"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex gap-1.5">
+            {(["All", ...SEVERITIES] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+                  filter === s
+                    ? "bg-indigo-500 text-white"
+                    : "border border-slate-700 text-slate-400 hover:border-indigo-500 hover:text-indigo-400"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => exportBugsCsv(bugs)}
+            disabled={bugs.length === 0}
+            title="Download all runs as CSV"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1 text-xs font-medium text-slate-400 transition hover:border-indigo-500 hover:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Download className="h-3.5 w-3.5" strokeWidth={2} />
+            Export CSV
+          </button>
         </div>
       </div>
 

@@ -34,7 +34,7 @@ RANDOM_SEED = 42
 
 # --- Files ---
 DATA_DIR = REPO_ROOT / "data"
-SEVERITY_DATASET = DATA_DIR / "severity_dataset.csv"
+SEVERITY_DATASET = DATA_DIR / "severity_data.csv"
 BOOTSTRAP_DATASET = DATA_DIR / "bootstrap_bugs.csv"
 MODULE_TEAM_MAP = DATA_DIR / "module_team_map.csv"
 MODEL_PATH = BACKEND_DIR / "app" / "ml" / "severity_model.pkl"

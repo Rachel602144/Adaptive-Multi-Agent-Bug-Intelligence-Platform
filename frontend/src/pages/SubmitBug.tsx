@@ -48,14 +48,18 @@ export function SubmitBug() {
     onSuccess: (bug) => navigate(`/bugs/${bug.bug_id}`),
   });
 
-  const titleTooShort = title.trim().length > 0 && title.trim().length < 3;
+  const TITLE_MIN = 10;
+  const DESCRIPTION_MIN = 20;
+
+  const titleTooShort = title.trim().length > 0 && title.trim().length < TITLE_MIN;
   const titleError = touched && (title.trim().length === 0 || titleTooShort);
-  const descriptionError = touched && description.trim().length === 0;
+  const descriptionTooShort = description.trim().length > 0 && description.trim().length < DESCRIPTION_MIN;
+  const descriptionError = touched && (description.trim().length === 0 || descriptionTooShort);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setTouched(true);
-    if (title.trim().length < 3 || description.trim().length === 0) return;
+    if (title.trim().length < TITLE_MIN || description.trim().length < DESCRIPTION_MIN) return;
 
     mutation.mutate({
       title: title.trim(),
@@ -117,7 +121,9 @@ export function SubmitBug() {
           />
           {titleError && (
             <p className="mt-1 text-xs text-red-400">
-              {title.trim().length === 0 ? "Title is required." : "Title needs at least 3 characters."}
+              {title.trim().length === 0
+                ? "Title is required."
+                : `Title needs at least ${TITLE_MIN} characters — "trial 2" or "bla bla" isn't enough to triage.`}
             </p>
           )}
         </div>
@@ -135,7 +141,13 @@ export function SubmitBug() {
             maxLength={10000}
             className={inputClass}
           />
-          {descriptionError && <p className="mt-1 text-xs text-red-400">Description is required.</p>}
+          {descriptionError && (
+            <p className="mt-1 text-xs text-red-400">
+              {description.trim().length === 0
+                ? "Description is required."
+                : `Description needs at least ${DESCRIPTION_MIN} characters — describe what actually happened.`}
+            </p>
+          )}
         </div>
 
         <div>

@@ -19,6 +19,7 @@ import { SeverityBadge } from "../components/SeverityBadge";
 import { StatCard } from "../components/StatCard";
 import { Card, CardTitle } from "../components/ui/Card";
 import { Table, TBody, TD, TH, THead, TR } from "../components/ui/Table";
+import type { StatsResponse } from "../types/bug";
 
 const SEVERITY_COLOR: Record<string, string> = {
   Critical: "#ef4444",
@@ -76,6 +77,92 @@ function SeverityDonut({ data }: { data: { name: string; value: number }[] }) {
           </div>
         ))}
       </div>
+    </Card>
+  );
+}
+
+function AgentUsageChart({ usage }: { usage: Record<string, { ran: number; skipped: number; failed: number }> }) {
+  const data = AGENT_ORDER.map((agent) => {
+    const u = usage[agent] ?? { ran: 0, skipped: 0, failed: 0 };
+    return { name: AGENT_LABEL[agent], ran: u.ran, skipped: u.skipped, failed: u.failed };
+  });
+  const hasData = data.some((d) => d.ran + d.skipped + d.failed > 0);
+
+  return (
+    <Card>
+      <CardTitle className="mb-4">Agent usage — ran vs. skipped</CardTitle>
+      {!hasData ? (
+        <p className="py-16 text-center text-sm text-slate-500">No data yet.</p>
+      ) : (
+        <>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#1e293b" />
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: "#64748b" }} />
+              <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 12, fill: "#94a3b8" }} />
+              <Tooltip cursor={{ fill: "rgba(99,102,241,0.08)" }} contentStyle={TOOLTIP_STYLE} />
+              <Bar dataKey="ran" stackId="a" fill="#6366f1" radius={[0, 0, 0, 0]} name="Ran" />
+              <Bar dataKey="skipped" stackId="a" fill="#334155" radius={[0, 6, 6, 0]} name="Skipped" />
+              <Bar dataKey="failed" stackId="a" fill="#ef4444" radius={[0, 6, 6, 0]} name="Failed" />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="mt-2 flex justify-center gap-4 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-indigo-500" /> Ran
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-slate-600" /> Skipped
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-red-500" /> Failed
+            </span>
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
+function EfficiencyByMode({ stats }: { stats: StatsResponse }) {
+  const adaptive = stats.efficiency_by_mode.adaptive;
+  const staticMode = stats.efficiency_by_mode.static;
+
+  const rows: { label: string; adaptive: string | number; static: string | number }[] = [
+    { label: "Bugs run", adaptive: adaptive.count, static: staticMode.count },
+    { label: "Avg. agents / bug", adaptive: `${adaptive.avg_agents_run}/6`, static: `${staticMode.avg_agents_run}/6` },
+    { label: "Avg. time / bug", adaptive: `${adaptive.avg_total_ms} ms`, static: `${staticMode.avg_total_ms} ms` },
+    { label: "Avg. LLM calls / bug", adaptive: adaptive.avg_llm_calls, static: staticMode.avg_llm_calls },
+  ];
+
+  return (
+    <Card>
+      <CardTitle className="mb-1">Efficiency — adaptive vs. static</CardTitle>
+      <p className="mb-4 text-xs text-slate-500">
+        Static runs every agent on every bug as a baseline; adaptive lets the Supervisor choose. This is what proves
+        adaptive routing actually saves work.
+      </p>
+      {adaptive.count === 0 && staticMode.count === 0 ? (
+        <p className="py-8 text-center text-sm text-slate-500">No data yet.</p>
+      ) : (
+        <Table>
+          <THead>
+            <tr>
+              <TH></TH>
+              <TH>Adaptive</TH>
+              <TH>Static</TH>
+            </tr>
+          </THead>
+          <TBody>
+            {rows.map((r) => (
+              <TR key={r.label}>
+                <TD className="font-medium text-slate-200">{r.label}</TD>
+                <TD className="tabular-nums text-indigo-400">{r.adaptive}</TD>
+                <TD className="tabular-nums text-slate-400">{r.static}</TD>
+              </TR>
+            ))}
+          </TBody>
+        </Table>
+      )}
     </Card>
   );
 }
@@ -145,8 +232,13 @@ export function Dashboard() {
         <BarChartCard title="By team" data={toChartData(stats.by_team)} />
       </div>
 
+      <div className="grid gap-5 lg:grid-cols-2">
+        <AgentUsageChart usage={stats.agent_usage} />
+        <EfficiencyByMode stats={stats} />
+      </div>
+
       <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Agent usage</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Agent usage detail</h2>
         <Table>
           <THead>
             <tr>

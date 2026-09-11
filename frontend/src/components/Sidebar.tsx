@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
-import { Bug, LayoutDashboard, History as HistoryIcon } from "lucide-react";
+import { Bug, GitCompare, LayoutDashboard, History as HistoryIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { api } from "../api/client";
 
@@ -8,26 +8,34 @@ const LINKS = [
   { to: "/", label: "Submit Bug", icon: Bug, end: true },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/history", label: "History", icon: HistoryIcon },
+  { to: "/compare", label: "Compare", icon: GitCompare },
 ];
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
 
 function StatusIndicator() {
-  const { data } = useQuery({ queryKey: ["health"], queryFn: api.health, refetchInterval: 30_000 });
+  const { data } = useQuery({ queryKey: ["stats"], queryFn: api.getStats, refetchInterval: 10_000 });
 
-  const connected = Boolean(data?.llm);
-  const label = data ? (connected ? "Gemini" : "Rule-based fallback") : "Connecting…";
+  const online = Boolean(data && data.avg_llm_calls > 0);
+  const label = !data ? "Connecting…" : online ? "LLM: online" : "LLM: offline (rule fallback)";
 
   return (
     <div className="flex items-center justify-center gap-2 px-2 py-2 md:justify-start" title={label}>
       <span
         className={clsx(
           "h-2 w-2 shrink-0 rounded-full",
-          !data ? "bg-slate-600" : connected ? "bg-emerald-500" : "bg-amber-500",
+          !data ? "bg-slate-600" : online ? "bg-emerald-500" : "bg-amber-500",
         )}
       />
-      <span className="hidden truncate text-xs text-slate-500 md:inline">{label}</span>
+      <span
+        className={clsx(
+          "hidden truncate text-xs md:inline",
+          !data ? "text-slate-500" : online ? "text-emerald-400" : "text-amber-400",
+        )}
+      >
+        {label}
+      </span>
     </div>
   );
 }

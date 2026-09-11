@@ -2,29 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import { AgentTraceStepper } from "../components/AgentTraceStepper";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
 import { PriorityBadge } from "../components/PriorityBadge";
 import { SeverityBadge } from "../components/SeverityBadge";
+import { DecisionTag } from "../components/SupervisorDecisionPanel";
+import { SupervisorDecisionPanel } from "../components/SupervisorDecisionPanel";
 import { Card, CardTitle } from "../components/ui/Card";
-import type { Severity } from "../types/bug";
-
-const SMART_SOURCES = new Set(["gemini", "model"]);
-
-function SourceTag({ source }: { source: string | undefined }) {
-  if (!source) return null;
-  const smart = SMART_SOURCES.has(source);
-  return (
-    <span
-      className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-        smart ? "bg-indigo-500/15 text-indigo-400" : "bg-slate-800 text-slate-400"
-      }`}
-    >
-      via {source}
-    </span>
-  );
-}
+import type { AgentName, Severity } from "../types/bug";
 
 function Field({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
@@ -48,9 +33,9 @@ function SectionCard({
 }) {
   return (
     <Card>
-      <CardTitle className="mb-3 flex items-center">
+      <CardTitle className="mb-3 flex items-center gap-2">
         {title}
-        <SourceTag source={source} />
+        {!skipped && source && <DecisionTag source={source} />}
       </CardTitle>
       {skipped ? (
         <p className="text-sm italic text-slate-500">Skipped by the supervisor for this bug.</p>
@@ -99,13 +84,24 @@ export function BugResult() {
     );
   }
 
+  const traceSource = (agent: AgentName) => bug.execution_trace.find((t) => t.agent === agent)?.source;
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-6 py-10">
+      <Link to="/history" className="inline-flex items-center gap-1.5 text-sm text-indigo-400 hover:underline">
+        <ArrowLeft className="h-3.5 w-3.5" /> All bugs
+      </Link>
+
+      <SupervisorDecisionPanel
+        trace={bug.execution_trace}
+        metrics={bug.metrics}
+        shortCircuit={bug.short_circuit}
+        selectedAgents={bug.selected_agents}
+        supervisorReason={bug.supervisor_reason}
+      />
+
       <div>
-        <Link to="/history" className="inline-flex items-center gap-1.5 text-sm text-indigo-400 hover:underline">
-          <ArrowLeft className="h-3.5 w-3.5" /> All bugs
-        </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold text-white">{bug.title}</h1>
           {bug.decision && <SeverityBadge label={bug.decision.severity} />}
           {bug.decision && <PriorityBadge priority={bug.decision.priority} />}
@@ -128,9 +124,9 @@ export function BugResult() {
 
       {bug.decision && (
         <Card className="border-indigo-500/30 bg-indigo-500/5">
-          <CardTitle className="mb-3 flex items-center text-indigo-400">
+          <CardTitle className="mb-3 flex items-center gap-2 text-indigo-400">
             Final recommendation
-            <SourceTag source={bug.decision.explanation_source} />
+            <DecisionTag source={traceSource("engineering_decision")} />
           </CardTitle>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Field label="Priority" value={bug.decision.priority} />
@@ -142,17 +138,8 @@ export function BugResult() {
         </Card>
       )}
 
-      <div className="space-y-4">
-        <AgentTraceStepper trace={bug.execution_trace} />
-        {bug.supervisor_reason && (
-          <blockquote className="card border-l-4 border-l-indigo-500 px-5 py-4 text-sm italic text-slate-400">
-            “{bug.supervisor_reason}”
-          </blockquote>
-        )}
-      </div>
-
       <div className="grid gap-5 sm:grid-cols-2">
-        <SectionCard title="Analysis" source={bug.analysis?.source} skipped={!bug.analysis}>
+        <SectionCard title="Analysis" source={traceSource("bug_analysis")} skipped={!bug.analysis}>
           {bug.analysis && (
             <>
               <Field label="Category" value={bug.analysis.category} />
@@ -163,13 +150,14 @@ export function BugResult() {
           )}
         </SectionCard>
 
-        <SectionCard title="Duplicate check" source={bug.duplicate?.match_source ?? undefined} skipped={!bug.duplicate}>
+        <SectionCard title="Duplicate check" source={traceSource("duplicate")} skipped={!bug.duplicate}>
           {bug.duplicate && (
             <>
               <Field label="Is duplicate" value={bug.duplicate.is_duplicate ? "Yes" : "No"} />
               <Field label="Possible duplicate" value={bug.duplicate.possible_duplicate ? "Yes" : "No"} />
               <Field label="Similarity score" value={bug.duplicate.score.toFixed(3)} />
               <Field label="Closest match" value={bug.duplicate.match_title} />
+              <Field label="Match source" value={bug.duplicate.match_source} />
               {bug.duplicate.top_matches.length > 0 && (
                 <div className="col-span-2">
                   <dt className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -191,7 +179,7 @@ export function BugResult() {
           )}
         </SectionCard>
 
-        <SectionCard title="Severity" source={bug.severity?.source} skipped={!bug.severity}>
+        <SectionCard title="Severity" source={traceSource("severity")} skipped={!bug.severity}>
           {bug.severity && (
             <div className="col-span-2 space-y-4">
               <div>
@@ -225,11 +213,12 @@ export function BugResult() {
           )}
         </SectionCard>
 
-        <SectionCard title="Assignment" source={bug.assignment?.matched_on} skipped={!bug.assignment}>
+        <SectionCard title="Assignment" source={traceSource("assignment")} skipped={!bug.assignment}>
           {bug.assignment && (
             <>
               <Field label="Team" value={bug.assignment.team} />
               <Field label="Rule" value={bug.assignment.rule} />
+              <Field label="Matched on" value={bug.assignment.matched_on} />
             </>
           )}
         </SectionCard>

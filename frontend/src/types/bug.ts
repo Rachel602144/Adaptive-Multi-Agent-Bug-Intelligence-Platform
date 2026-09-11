@@ -147,6 +147,13 @@ export interface AgentUsage {
   avg_ms: number;
 }
 
+export interface ModeEfficiency {
+  count: number;
+  avg_agents_run: number;
+  avg_total_ms: number;
+  avg_llm_calls: number;
+}
+
 export interface StatsResponse {
   total: number;
   triaged: number;
@@ -162,6 +169,7 @@ export interface StatsResponse {
   agent_usage: Record<string, AgentUsage>;
   avg_total_ms: number;
   avg_llm_calls: number;
+  efficiency_by_mode: Record<Mode, ModeEfficiency>;
 }
 
 export interface TeamsResponse {
