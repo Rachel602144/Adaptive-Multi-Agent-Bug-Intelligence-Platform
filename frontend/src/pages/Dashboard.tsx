@@ -124,14 +124,15 @@ function AgentUsageChart({ usage }: { usage: Record<string, { ran: number; skipp
 }
 
 function EfficiencyByMode({ stats }: { stats: StatsResponse }) {
-  const adaptive = stats.efficiency_by_mode.adaptive;
-  const staticMode = stats.efficiency_by_mode.static;
+  const adaptive = stats.by_mode.adaptive;
+  const staticMode = stats.by_mode.static;
 
   const rows: { label: string; adaptive: string | number; static: string | number }[] = [
-    { label: "Bugs run", adaptive: adaptive.count, static: staticMode.count },
+    { label: "Bugs run", adaptive: adaptive.runs, static: staticMode.runs },
     { label: "Avg. agents / bug", adaptive: `${adaptive.avg_agents_run}/6`, static: `${staticMode.avg_agents_run}/6` },
     { label: "Avg. time / bug", adaptive: `${adaptive.avg_total_ms} ms`, static: `${staticMode.avg_total_ms} ms` },
     { label: "Avg. LLM calls / bug", adaptive: adaptive.avg_llm_calls, static: staticMode.avg_llm_calls },
+    { label: "Avg. tokens / bug", adaptive: adaptive.avg_tokens, static: staticMode.avg_tokens },
   ];
 
   return (
@@ -141,7 +142,7 @@ function EfficiencyByMode({ stats }: { stats: StatsResponse }) {
         Static runs every agent on every bug as a baseline; adaptive lets the Supervisor choose. This is what proves
         adaptive routing actually saves work.
       </p>
-      {adaptive.count === 0 && staticMode.count === 0 ? (
+      {adaptive.runs === 0 && staticMode.runs === 0 ? (
         <p className="py-8 text-center text-sm text-slate-500">No data yet.</p>
       ) : (
         <Table>
@@ -162,6 +163,49 @@ function EfficiencyByMode({ stats }: { stats: StatsResponse }) {
             ))}
           </TBody>
         </Table>
+      )}
+    </Card>
+  );
+}
+
+function ComparisonEvidence({ stats }: { stats: StatsResponse }) {
+  const c = stats.comparisons;
+  return (
+    <Card>
+      <CardTitle className="mb-1">Paired comparisons (Compare page)</CardTitle>
+      <p className="mb-4 text-xs text-slate-500">
+        The strongest evidence: the same bug run through both modes, so this compares like with like.
+      </p>
+      {c.count === 0 ? (
+        <p className="py-8 text-center text-sm text-slate-500">
+          No comparisons yet — try the Compare page.
+        </p>
+      ) : (
+        <>
+          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Comparisons</dt>
+              <dd className="mt-0.5 text-lg font-semibold tabular-nums text-slate-200">{c.count}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Avg. agents saved</dt>
+              <dd className="mt-0.5 text-lg font-semibold tabular-nums text-emerald-400">{c.avg_agents_saved}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Avg. time saved</dt>
+              <dd className="mt-0.5 text-lg font-semibold tabular-nums text-emerald-400">{c.avg_time_saved_ms} ms</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Avg. tokens saved</dt>
+              <dd className="mt-0.5 text-lg font-semibold tabular-nums text-emerald-400">{c.avg_tokens_saved}</dd>
+            </div>
+          </dl>
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-800 pt-4 text-xs text-slate-400">
+            <span>Same priority: {Math.round(c.same_priority_rate * 100)}%</span>
+            <span>Same severity: {Math.round(c.same_severity_rate * 100)}%</span>
+            <span>Same team: {Math.round(c.same_team_rate * 100)}%</span>
+          </div>
+        </>
       )}
     </Card>
   );
@@ -236,6 +280,8 @@ export function Dashboard() {
         <AgentUsageChart usage={stats.agent_usage} />
         <EfficiencyByMode stats={stats} />
       </div>
+
+      <ComparisonEvidence stats={stats} />
 
       <div>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Agent usage detail</h2>

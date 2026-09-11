@@ -24,9 +24,12 @@ function exportBugsCsv(bugs: BugSummary[]) {
     module: b.module ?? "",
     is_duplicate: b.is_duplicate,
     duplicate_of: b.duplicate_of ?? "",
-    agents_run: b.agents_run.length,
+    short_circuit: b.short_circuit,
+    agents_run: b.agents_run_count,
     agents_run_list: b.agents_run.join(" "),
     total_ms: b.total_ms ?? "",
+    llm_calls: b.llm_calls,
+    tokens: b.tokens,
     created_at: b.created_at ?? "",
   }));
   downloadCsv(`bug-runs-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(rows));
@@ -132,7 +135,7 @@ export function History() {
                 <TD>{bug.category ?? "—"}</TD>
                 <TD>{bug.team ?? "—"}</TD>
                 <TD>{bug.priority ?? "—"}</TD>
-                <TD className="tabular-nums text-slate-500">{bug.agents_run.length} / 6</TD>
+                <TD className="tabular-nums text-slate-500">{bug.agents_run_count} / 6</TD>
               </TR>
             ))}
           </TBody>

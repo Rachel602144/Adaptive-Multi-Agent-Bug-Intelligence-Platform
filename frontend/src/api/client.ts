@@ -2,6 +2,7 @@ import type {
   BugInput,
   BugState,
   BugSummary,
+  CompareResponse,
   HealthResponse,
   StatsResponse,
   TeamsResponse,
@@ -47,6 +48,12 @@ export const api = {
     }),
 
   listBugs: () => request<BugSummary[]>("/api/bugs"),
+
+  compare: (bug: Omit<BugInput, "mode">) =>
+    request<CompareResponse>("/api/compare", {
+      method: "POST",
+      body: JSON.stringify(bug),
+    }),
 
   getBug: (id: number) => request<BugState>(`/api/bugs/${id}`),
 

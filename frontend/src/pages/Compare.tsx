@@ -1,25 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
 import { PriorityBadge } from "../components/PriorityBadge";
 import { Button } from "../components/ui/Button";
 import { Card, CardTitle } from "../components/ui/Card";
-import type { BugState, Mode } from "../types/bug";
+import type { BugState } from "../types/bug";
 
 const TITLE_MIN = 10;
 const DESCRIPTION_MIN = 20;
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30";
-
-interface CompareResult {
-  adaptive: BugState;
-  static: BugState;
-}
 
 function ModeColumn({ label, bug }: { label: string; bug: BugState }) {
   return (
@@ -46,13 +40,20 @@ function ModeColumn({ label, bug }: { label: string; bug: BugState }) {
           <dd className="mt-0.5 text-lg font-semibold tabular-nums text-slate-200">{bug.metrics.tokens}</dd>
         </div>
       </dl>
-      <Link
-        to={`/bugs/${bug.bug_id}`}
-        className="mt-4 inline-block text-xs text-indigo-400 hover:underline"
-      >
-        View full result (#{bug.bug_id}) →
-      </Link>
     </Card>
+  );
+}
+
+function savedColor(n: number): string {
+  return n > 0 ? "text-emerald-400" : n < 0 ? "text-amber-400" : "text-slate-400";
+}
+
+function MatchLine({ label, match }: { label: string; match: boolean }) {
+  return (
+    <span className={`flex items-center gap-1.5 text-sm ${match ? "text-emerald-400" : "text-amber-400"}`}>
+      {match ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+      {label}
+    </span>
   );
 }
 
@@ -63,14 +64,7 @@ export function Compare() {
   const [environment, setEnvironment] = useState("");
   const [touched, setTouched] = useState(false);
 
-  const mutation = useMutation({
-    mutationFn: async (input: { title: string; description: string; stack_trace?: string; environment?: string }) => {
-      const [adaptive, staticResult] = await Promise.all(
-        (["adaptive", "static"] as Mode[]).map((mode) => api.submitBug({ ...input, mode })),
-      );
-      return { adaptive, static: staticResult } satisfies CompareResult;
-    },
-  });
+  const mutation = useMutation({ mutationFn: api.compare });
 
   const titleError = touched && title.trim().length < TITLE_MIN;
   const descriptionError = touched && description.trim().length < DESCRIPTION_MIN;
@@ -89,16 +83,13 @@ export function Compare() {
   }
 
   const result = mutation.data;
-  const prioritiesMatch =
-    result && result.adaptive.decision && result.static.decision
-      ? result.adaptive.decision.priority === result.static.decision.priority
-      : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-6 py-10">
       <h1 className="text-2xl font-semibold text-white">Adaptive vs. static comparison</h1>
       <p className="text-sm text-slate-400">
         Submit one bug and run it through both routing modes to see how much work adaptive routing actually saves.
+        This runs as a research ablation — it isn't saved as a real bug and won't affect duplicate detection.
       </p>
 
       <form onSubmit={handleSubmit} className="card space-y-5 p-6">
@@ -182,18 +173,40 @@ export function Compare() {
 
       {result && (
         <div className="space-y-4">
-          <div
-            className={`flex items-center gap-2 rounded-xl border px-5 py-4 text-sm ${
-              prioritiesMatch
-                ? "border-emerald-900/50 bg-emerald-950/30 text-emerald-400"
-                : "border-amber-900/50 bg-amber-950/30 text-amber-400"
-            }`}
-          >
-            {prioritiesMatch ? <Check className="h-4 w-4 shrink-0" /> : <X className="h-4 w-4 shrink-0" />}
-            {prioritiesMatch
-              ? `Final priority matches: both modes landed on ${result.adaptive.decision?.priority}.`
-              : `Final priority differs: adaptive → ${result.adaptive.decision?.priority ?? "—"}, static → ${result.static.decision?.priority ?? "—"}.`}
-          </div>
+          <Card className="border-indigo-500/30 bg-indigo-500/5">
+            <CardTitle className="mb-3 text-indigo-400">What adaptive saved</CardTitle>
+            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Agents saved</dt>
+                <dd className={`mt-0.5 text-lg font-semibold tabular-nums ${savedColor(result.summary.agents_saved)}`}>
+                  {result.summary.agents_saved}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Time saved</dt>
+                <dd className={`mt-0.5 text-lg font-semibold tabular-nums ${savedColor(result.summary.time_saved_ms)}`}>
+                  {result.summary.time_saved_ms} ms
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">LLM calls saved</dt>
+                <dd className={`mt-0.5 text-lg font-semibold tabular-nums ${savedColor(result.summary.llm_calls_saved)}`}>
+                  {result.summary.llm_calls_saved}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Tokens saved</dt>
+                <dd className={`mt-0.5 text-lg font-semibold tabular-nums ${savedColor(result.summary.tokens_saved)}`}>
+                  {result.summary.tokens_saved}
+                </dd>
+              </div>
+            </dl>
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-800 pt-4">
+              <MatchLine label="Same priority" match={result.summary.same_priority} />
+              <MatchLine label="Same severity" match={result.summary.same_severity} />
+              <MatchLine label="Same team" match={result.summary.same_team} />
+            </div>
+          </Card>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <ModeColumn label="Adaptive" bug={result.adaptive} />

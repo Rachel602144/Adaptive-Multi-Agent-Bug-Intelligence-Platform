@@ -90,9 +90,10 @@ export interface Metrics {
   agents_run: number;
 }
 
-// Full state — returned by GET /api/bugs/{id} and POST /api/bugs
+// Full state — returned by GET /api/bugs/{id} and POST /api/bugs.
+// bug_id is null for /api/compare runs, which aren't persisted as real bugs.
 export interface BugState {
-  bug_id: number;
+  bug_id: number | null;
   title: string;
   description: string;
   stack_trace: string | null;
@@ -129,7 +130,11 @@ export interface BugSummary {
   is_duplicate: boolean;
   duplicate_of: string | null;
   agents_run: string[];
+  agents_run_count: number;
   total_ms: number | null;
+  llm_calls: number;
+  tokens: number;
+  short_circuit: boolean;
 }
 
 export interface BugInput {
@@ -148,10 +153,22 @@ export interface AgentUsage {
 }
 
 export interface ModeEfficiency {
-  count: number;
+  runs: number;
   avg_agents_run: number;
   avg_total_ms: number;
   avg_llm_calls: number;
+  avg_tokens: number;
+}
+
+export interface ComparisonAggregate {
+  count: number;
+  avg_agents_saved: number;
+  avg_time_saved_ms: number;
+  avg_llm_calls_saved: number;
+  avg_tokens_saved: number;
+  same_priority_rate: number;
+  same_severity_rate: number;
+  same_team_rate: number;
 }
 
 export interface StatsResponse {
@@ -169,7 +186,26 @@ export interface StatsResponse {
   agent_usage: Record<string, AgentUsage>;
   avg_total_ms: number;
   avg_llm_calls: number;
-  efficiency_by_mode: Record<Mode, ModeEfficiency>;
+  by_mode: Record<Mode, ModeEfficiency>;
+  comparisons: ComparisonAggregate;
+}
+
+export interface CompareSummary {
+  agents_saved: number;
+  time_saved_ms: number;
+  llm_calls_saved: number;
+  tokens_saved: number;
+  same_priority: boolean;
+  same_severity: boolean;
+  same_team: boolean;
+  adaptive_path: string[];
+}
+
+export interface CompareResponse {
+  comparison_id: number;
+  adaptive: BugState;
+  static: BugState;
+  summary: CompareSummary;
 }
 
 export interface TeamsResponse {
