@@ -46,13 +46,27 @@ Build against `contracts/api_sample.json` until the real API is live — don't w
 - Map: blocker, critical → Critical · major → High · normal → Medium · minor, trivial → Low · drop enhancement
 - Clean empty / duplicate / non-English rows → `data/severity_dataset.csv` (`title, description, severity`); note class counts
 
-**2. Module → team map** — 8–10 modules (Authentication, Payment, UI, Database, API, …), each with team + keywords → `data/module_team_map.csv`
-**3. Test bugs** — 3 demo bugs (UI typo · HTTP 500 after password reset · "Authentication failure after password reset") + 15 test bugs with expected severity, team, path → `data/test_bugs.csv`
-**4. Duplicate pairs** — 10 real duplicates + 10 similar-but-different → `data/duplicate_pairs.csv`; compute precision / recall
-**5. Evaluation** — screenshots of accuracy, F1, confusion matrix; expected vs actual table for all 18 bugs; latency per path
-**6. Testing** — edge cases on the live app (empty fields, long text, gibberish); report issues with screenshots
-**7. Report** — Problem, Related work, Architecture, Implementation, Results, Limitations, Future work
-**8. Slides + demo** — 8–10 slides; 5-min demo script (who clicks what, which bug, what to say)
+**2. Module → team map**
+- 8–10 modules: Authentication, Payment, UI, Database, API, Notifications, Search, Performance, …
+- Each with owning team (Backend / Frontend / Database / DevOps / Security) + 5–10 keywords → `data/module_team_map.csv` (`module, team, keywords`)
+
+**3. Test & demo bugs**
+- 3 demo bugs: UI typo (light path) · HTTP 500 after password reset with stack trace (full path, Critical) · "Authentication failure after password reset" (duplicate)
+- 15 more test bugs (UI, backend, auth, payment, performance, database), each with expected severity, team, path → `data/test_bugs.csv`
+
+**4. Duplicate pairs**
+- 10 real duplicates (same issue, different wording) + 10 similar-but-different → `data/duplicate_pairs.csv` (`bug_a, bug_b, is_duplicate`)
+- After testing: compute precision / recall of our duplicate agent
+
+**5. Evaluation (after model is trained)**
+- Screenshots: accuracy, macro-F1, confusion matrix
+- Run all 18 test bugs on the live app → expected vs actual table (severity, team, path); latency per path
+
+**6. Testing** — edge cases on the live app (empty fields, very long text, gibberish, no stack trace); report issues in the group with screenshots
+
+**7. Report** — Problem, Related work (from review 2), Architecture, Implementation, Results (numbers from step 5), Limitations (honest: dataset, rule-based assignment, LLM dependency), Future work
+
+**8. Slides + demo** — 8–10 slides (problem → gap → architecture → adaptive routing → demo → results → limitations); 5-min demo script (who clicks what, which bug, what to say)
 
 ## Research Paper Track (after the demo)
 1. **Ablation:** adaptive vs static — latency, LLM calls/tokens, accuracy (main result)
