@@ -6,7 +6,7 @@ Check-ins (5 min call): 1am, 9am, 1pm, 4pm. Stuck >30 min → say it in the grou
 
 ---
 
-## Rachel — Entire backend (lead)
+## Rachel — Entire backend 
 Folders: `backend/`, `contracts/`
 
 1. LangGraph graph + all 6 agents (Supervisor, Bug Analysis, Duplicate, Severity, Assignment, Engineering Decision)
