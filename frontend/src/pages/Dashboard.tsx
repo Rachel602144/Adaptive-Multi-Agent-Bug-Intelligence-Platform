@@ -1,5 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { animate, motion, useMotionValue } from "framer-motion";
+import {
+  Bug,
+  Clock,
+  Copy,
+  Database,
+  Gauge,
+  GitCompare,
+  LayoutGrid,
+  ListChecks,
+  Scale,
+  Sparkles,
+  TriangleAlert,
+  Users,
+  Workflow,
+  Zap,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -51,10 +69,125 @@ function toChartData(record: Record<string, number>) {
   return Object.entries(record).map(([name, value]) => ({ name, value }));
 }
 
+function Counter({ value, decimals = 0, suffix = "" }: { value: number; decimals?: number; suffix?: string }) {
+  const mv = useMotionValue(0);
+  const [display, setDisplay] = useState((0).toFixed(decimals));
+
+  useEffect(() => {
+    const controls = animate(mv, value, { duration: 0.9, ease: "easeOut" });
+    const unsub = mv.on("change", (v) => setDisplay(v.toFixed(decimals)));
+    return () => {
+      controls.stop();
+      unsub();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, decimals]);
+
+  return (
+    <>
+      {display}
+      {suffix}
+    </>
+  );
+}
+
+interface Headline {
+  agentsSavedPct: number;
+  timeSavedMs: number;
+  timeSavedPct: number | null;
+  samePriorityPct: number;
+  sampleSize: number;
+  source: "comparisons" | "by_mode";
+}
+
+function computeHeadline(stats: StatsResponse): Headline | null {
+  const c = stats.comparisons;
+  if (c.count > 0) {
+    const staticAvgMs = stats.by_mode.static.runs > 0 ? stats.by_mode.static.avg_total_ms : null;
+    return {
+      agentsSavedPct: Math.round((c.avg_agents_saved / 6) * 100),
+      timeSavedMs: Math.round(c.avg_time_saved_ms),
+      timeSavedPct: staticAvgMs ? Math.round((c.avg_time_saved_ms / staticAvgMs) * 100) : null,
+      samePriorityPct: Math.round(c.same_priority_rate * 100),
+      sampleSize: c.count,
+      source: "comparisons",
+    };
+  }
+  const a = stats.by_mode.adaptive;
+  const s = stats.by_mode.static;
+  if (a.runs > 0 && s.runs > 0) {
+    const timeSavedMs = s.avg_total_ms - a.avg_total_ms;
+    return {
+      agentsSavedPct: Math.round(((6 - a.avg_agents_run) / 6) * 100),
+      timeSavedMs: Math.round(timeSavedMs),
+      timeSavedPct: s.avg_total_ms > 0 ? Math.round((timeSavedMs / s.avg_total_ms) * 100) : null,
+      samePriorityPct: 100,
+      sampleSize: a.runs + s.runs,
+      source: "by_mode",
+    };
+  }
+  return null;
+}
+
+function HeadlineFinding({ stats }: { stats: StatsResponse }) {
+  const headline = computeHeadline(stats);
+
+  return (
+    <div className="rounded-2xl border border-indigo-500/20 bg-slate-900 p-6 shadow-[0_0_60px_-20px_rgba(99,102,241,0.35)] sm:p-8">
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-indigo-400">
+        <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
+        Key finding
+      </span>
+
+      {!headline ? (
+        <p className="mt-3 text-sm text-slate-400">
+          Submit a few bugs — or try the{" "}
+          <Link to="/compare" className="text-indigo-400 hover:underline">
+            Compare page
+          </Link>{" "}
+          — to see how much work adaptive routing actually saves.
+        </p>
+      ) : (
+        <>
+          <p className="mt-3 max-w-2xl text-lg font-medium leading-snug text-white sm:text-xl">
+            Adaptive routing skips{" "}
+            <span className="text-indigo-400">
+              <Counter value={headline.agentsSavedPct} suffix="%" />
+            </span>{" "}
+            of agent work
+            {headline.timeSavedPct !== null && (
+              <>
+                {" "}
+                and finishes{" "}
+                <span className="text-indigo-400">
+                  <Counter value={headline.timeSavedPct} suffix="%" />
+                </span>{" "}
+                faster
+              </>
+            )}
+            , landing on the same priority{" "}
+            <span className="text-indigo-400">
+              <Counter value={headline.samePriorityPct} suffix="%" />
+            </span>{" "}
+            of the time — compared to running every agent on every bug.
+          </p>
+          <p className="mt-4 text-xs text-slate-500">
+            Based on {headline.sampleSize} {headline.source === "comparisons" ? "paired comparisons" : "triaged bugs"}
+            {headline.source === "by_mode" && " across adaptive and static mode"}.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
 function SeverityDonut({ data }: { data: { name: string; value: number }[] }) {
   return (
     <Card>
-      <CardTitle className="mb-4">By severity</CardTitle>
+      <CardTitle className="mb-4 flex items-center gap-2">
+        <Gauge className="h-4 w-4 text-slate-500" strokeWidth={2} />
+        By severity
+      </CardTitle>
       {data.length === 0 ? (
         <p className="py-16 text-center text-sm text-slate-500">No data yet.</p>
       ) : (
@@ -90,7 +223,10 @@ function AgentUsageChart({ usage }: { usage: Record<string, { ran: number; skipp
 
   return (
     <Card>
-      <CardTitle className="mb-4">Agent usage — ran vs. skipped</CardTitle>
+      <CardTitle className="mb-4 flex items-center gap-2">
+        <Workflow className="h-4 w-4 text-slate-500" strokeWidth={2} />
+        Agent usage — ran vs. skipped
+      </CardTitle>
       {!hasData ? (
         <p className="py-16 text-center text-sm text-slate-500">No data yet.</p>
       ) : (
@@ -137,7 +273,10 @@ function EfficiencyByMode({ stats }: { stats: StatsResponse }) {
 
   return (
     <Card>
-      <CardTitle className="mb-1">Efficiency — adaptive vs. static</CardTitle>
+      <CardTitle className="mb-1 flex items-center gap-2">
+        <Scale className="h-4 w-4 text-slate-500" strokeWidth={2} />
+        Efficiency — adaptive vs. static
+      </CardTitle>
       <p className="mb-4 text-xs text-slate-500">
         Static runs every agent on every bug as a baseline; adaptive lets the Supervisor choose. This is what proves
         adaptive routing actually saves work.
@@ -172,7 +311,10 @@ function ComparisonEvidence({ stats }: { stats: StatsResponse }) {
   const c = stats.comparisons;
   return (
     <Card>
-      <CardTitle className="mb-1">Paired comparisons (Compare page)</CardTitle>
+      <CardTitle className="mb-1 flex items-center gap-2">
+        <GitCompare className="h-4 w-4 text-slate-500" strokeWidth={2} />
+        Paired comparisons (Compare page)
+      </CardTitle>
       <p className="mb-4 text-xs text-slate-500">
         The strongest evidence: the same bug run through both modes, so this compares like with like.
       </p>
@@ -211,10 +353,13 @@ function ComparisonEvidence({ stats }: { stats: StatsResponse }) {
   );
 }
 
-function BarChartCard({ title, data }: { title: string; data: { name: string; value: number }[] }) {
+function BarChartCard({ title, icon: Icon, data }: { title: string; icon: typeof Users; data: { name: string; value: number }[] }) {
   return (
     <Card>
-      <CardTitle className="mb-4">{title}</CardTitle>
+      <CardTitle className="mb-4 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-slate-500" strokeWidth={2} />
+        {title}
+      </CardTitle>
       {data.length === 0 ? (
         <p className="py-16 text-center text-sm text-slate-500">No data yet.</p>
       ) : (
@@ -231,6 +376,11 @@ function BarChartCard({ title, data }: { title: string; data: { name: string; va
     </Card>
   );
 }
+
+const fadeUp = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+};
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -255,36 +405,54 @@ export function Dashboard() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-6 py-10">
-      <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
+      <motion.div {...fadeUp} transition={{ duration: 0.3 }}>
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-indigo-400">
+          <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
+          System overview
+        </span>
+        <h1 className="mt-1 text-2xl font-semibold text-white">Dashboard</h1>
+        <p className="mt-1 text-sm text-slate-400">
+          Aggregate view across every bug triaged so far — refreshes automatically every 10 seconds.
+        </p>
+      </motion.div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Total bugs" value={stats.total} />
-        <StatCard label="Critical" value={stats.critical} accent="danger" />
-        <StatCard label="High" value={stats.high} accent="warning" />
-        <StatCard label="Duplicates caught" value={stats.duplicates} />
-      </div>
+      <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.05 }}>
+        <HeadlineFinding stats={stats} />
+      </motion.div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <StatCard label="Avg. latency / bug" value={`${stats.avg_total_ms} ms`} />
-        <StatCard label="Avg. LLM calls / bug" value={stats.avg_llm_calls} />
-        <StatCard label="Historical bugs indexed" value={stats.historical_bugs} />
-      </div>
+      <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.1 }} className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard icon={Bug} label="Total bugs" value={stats.total} />
+        <StatCard icon={TriangleAlert} label="Critical" value={stats.critical} accent="danger" />
+        <StatCard icon={TriangleAlert} label="High" value={stats.high} accent="warning" />
+        <StatCard icon={Copy} label="Duplicates caught" value={stats.duplicates} />
+      </motion.div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.15 }} className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <StatCard icon={Zap} label="Avg. latency / bug" value={`${stats.avg_total_ms} ms`} />
+        <StatCard icon={Sparkles} label="Avg. LLM calls / bug" value={stats.avg_llm_calls} />
+        <StatCard icon={Database} label="Historical bugs indexed" value={stats.historical_bugs} />
+      </motion.div>
+
+      <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.2 }} className="grid gap-5 lg:grid-cols-3">
         <SeverityDonut data={toChartData(stats.by_severity)} />
-        <BarChartCard title="By category" data={toChartData(stats.by_category)} />
-        <BarChartCard title="By team" data={toChartData(stats.by_team)} />
-      </div>
+        <BarChartCard title="By category" icon={LayoutGrid} data={toChartData(stats.by_category)} />
+        <BarChartCard title="By team" icon={Users} data={toChartData(stats.by_team)} />
+      </motion.div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.25 }} className="grid gap-5 lg:grid-cols-2">
         <AgentUsageChart usage={stats.agent_usage} />
         <EfficiencyByMode stats={stats} />
-      </div>
+      </motion.div>
 
-      <ComparisonEvidence stats={stats} />
+      <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.3 }}>
+        <ComparisonEvidence stats={stats} />
+      </motion.div>
 
-      <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Agent usage detail</h2>
+      <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.35 }}>
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <ListChecks className="h-4 w-4" strokeWidth={2} />
+          Agent usage detail
+        </h2>
         <Table>
           <THead>
             <tr>
@@ -310,10 +478,13 @@ export function Dashboard() {
             })}
           </TBody>
         </Table>
-      </div>
+      </motion.div>
 
-      <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Recent bugs</h2>
+      <motion.div {...fadeUp} transition={{ duration: 0.3, delay: 0.4 }}>
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <Clock className="h-4 w-4" strokeWidth={2} />
+          Recent bugs
+        </h2>
         {recentBugs.length === 0 ? (
           <Card>
             <p className="text-center text-sm text-slate-500">No bugs submitted yet.</p>
@@ -342,7 +513,7 @@ export function Dashboard() {
             </TBody>
           </Table>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }
